@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "Meeting Context AI",
+    "name": "MeetMe",
     "version": "1.0.0",
     "description": "Live transcription with automatic context from your knowledge base",
     "permissions": [
@@ -20,7 +20,7 @@
         "default_path": "sidepanel.html"
     },
     "action": {
-        "default_title": "Meeting Context AI"
+        "default_title": "MeetMe"
     },
     "commands": {
         "start-recording": {

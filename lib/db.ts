@@ -23,7 +23,7 @@ export class MeetingDatabase extends Dexie {
     heroCards!: Table<HeroCard>;
 
     constructor() {
-        super('MeetingIQ_v3_Vault');
+        super('MeetMe_v3_Vault');
         this.version(1).stores({
             documents: '++id, title, dateAdded',
             heroCards: '++id, entityName, docId'

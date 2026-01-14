@@ -115,7 +115,7 @@ async function init() {
         };
     }
 
-    console.log('MeetingIQ: Intelligence System Initialized.');
+    console.log('MeetMe: Intelligence System Initialized.');
 }
 
 async function handleFlashback() {

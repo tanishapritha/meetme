@@ -2,14 +2,29 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Activity, Zap, FileSearch, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HeroCard } from "@/components/intel/HeroCard";
+import { AuditFeed } from "@/components/intel/AuditFeed";
 import { useMeetingProcessor } from "@/hooks/useProcessor";
 
 export default function Home() {
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState("");
+    const [auditHits, setAuditHits] = useState<any[]>([]);
     const intelligence = useMeetingProcessor(transcript);
+
+    // Effect to bridge intelligence response to the rolling audit feed
+    useEffect(() => {
+        if (intelligence?.grounding?.matchFound) {
+            const detail = intelligence.grounding.detail;
+            if (!auditHits.some(h => h.detail === detail)) {
+                setAuditHits(prev => [
+                    { type: intelligence.grounding.type, detail },
+                    ...prev.slice(0, 2) // Maintain top 3
+                ]);
+            }
+        }
+    }, [intelligence]);
 
     return (
         <div className="flex flex-col h-screen text-white neural-grid">
@@ -17,7 +32,7 @@ export default function Home() {
             <header className="flex justify-between items-center p-4 border-b border-zinc-900 bg-black/80 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse ring-4 ring-red-500/20' : 'bg-zinc-700'}`} />
-                    <h1 className="text-[14px] font-black uppercase tracking-[0.2em] text-zinc-400">MeetingIQ <span className="text-zinc-600 font-normal">v3</span></h1>
+                    <h1 className="text-[14px] font-black uppercase tracking-[0.2em] text-zinc-400">MeetMe <span className="text-zinc-600 font-normal">v3</span></h1>
                 </div>
                 <button
                     onClick={() => setIsRecording(!isRecording)}
@@ -99,6 +114,11 @@ export default function Home() {
                                 <span className="text-[12px] text-zinc-600 italic">Listening for commitments...</span>
                             )}
                     </div>
+                </section>
+
+                {/* Audit Feed Layer */}
+                <section className="mt-4 pb-20">
+                    <AuditFeed hits={auditHits} />
                 </section>
 
             </div>
