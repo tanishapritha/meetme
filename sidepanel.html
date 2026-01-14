@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetingIQ | Enterprise Intelligence</title>
+    <link rel="stylesheet" href="styles/tailwind.min.css">
+    <script src="lib/dexie.min.js"></script>
+    <script src="lib/fuse.min.js"></script>
+    <script src="lib/compromise.min.js"></script>
+    <script src="lib/pdf.min.js"></script>
+    <script src="lib/mammoth.browser.min.js"></script>
+    <script src="utils/contextExtractor.js"></script>
+    <script src="utils/smartSearch.js"></script>
+    <script src="utils/aiInsights.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap');
+
+        :root {
+            --bg-base: #000000;
+            --bg-surface: #0a0a0b;
+            --bg-elevated: #111113;
+            --border-subtle: #333333;
+            --border-strong: #444444;
+            --text-primary: #ffffff;
+            --text-secondary: #e4e4e7;
+            --text-tertiary: #a1a1aa;
+            --accent-primary: #60a5fa;
+            --accent-success: #34d399;
+            --accent-warning: #fbbf24;
+            --accent-error: #f87171;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .app-header {
+            height: 52px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 50;
+        }
+
+        .status-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-error);
+            box-shadow: 0 0 8px var(--accent-error);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .status-led.active {
+            background: var(--accent-success);
+            box-shadow: 0 0 12px var(--accent-success);
+        }
+
+        .status-pill {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #000;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-tertiary);
+        }
+
+        .status-pill.active {
+            color: var(--accent-success);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            transition: all 0.3s;
+        }
+
+        .active .status-dot {
+            background: var(--accent-success);
+            box-shadow: 0 0 8px var(--accent-success);
+        }
+
+        .card-inner-header {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 800;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 24px 0 12px 0;
+            border-bottom: 2px solid var(--border-subtle);
+            padding-bottom: 4px;
+        }
+
+        .briefing-box {
+            padding: 16px;
+            background: #0a0a0b;
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+        }
+
+        #ai-insight-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.4;
+        }
+
+        .content-card {
+            background: #0a0a0b;
+            border: 2px solid var(--border-strong);
+            border-radius: 8px;
+        }
+
+        .intel-row {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .intel-row span {
+            font-size: 13px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        #neural-grounding-container {
+            border: 3px solid #ffffff;
+        }
+
+        #grounding-content {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        #grounding-header {
+            border-bottom: 2px solid #fff;
+        }
+
+        /* Stable Feed Transitions */
+        .slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Health Glow */
+        #health-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            z-index: 100;
+            transition: background 1s ease, box-shadow 1s ease;
+        }
+
+        .glow-calm {
+            background: var(--accent-primary);
+            box-shadow: 0 0 15px var(--accent-primary);
+        }
+
+        .glow-productive {
+            background: var(--accent-success);
+            box-shadow: 0 0 15px var(--accent-success);
+        }
+
+        .glow-tense {
+            background: var(--accent-error);
+            box-shadow: 0 0 15px var(--accent-error);
+        }
+
+        .action-card {
+            background: #111113;
+            border-left: 3px solid var(--accent-warning);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .action-card span {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .btn-done {
+            background: var(--accent-success);
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 900;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col">
+    <div id="health-glow" class="glow-calm"></div>
+    <!-- Clean Enterprise Header -->
+    <header class="app-header">
+        <div class="flex items-center gap-3">
+            <div id="status-led" class="status-led"></div>
+            <div>
+                <h1 class="text-[11px] font-black tracking-tighter uppercase text-white/90">MeetingIQ</h1>
+                <div class="status-pill">
+                    <div class="status-dot"></div>
+                    <span id="status-text">Ready</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+                <span class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Repository</span>
+                <span id="doc-count" class="text-[10px] font-black text-blue-500 mono">0</span>
+            </div>
+            <button onclick="chrome.runtime.sendMessage({type: 'TOGGLE_RECORDING'})" id="toggle-record-btn"
+                class="w-6 h-6 rounded-full bg-red-600 border border-white/10 shadow-lg hover:scale-105 active:scale-95 transition-all">
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 overflow-y-auto scroll-container p-4 space-y-6">
+
+        <!-- Section: Strategic Pulse -->
+        <section>
+            <div class="section-header">Live Strategic Pulse</div>
+            <div class="briefing-box border-blue-500/20">
+                <div class="flex items-start gap-4">
+                    <div class="w-6 h-6 rounded bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                    </div>
+                    <div class="space-y-1">
+                        <p id="ai-insight-text" class="text-xs text-zinc-300 leading-relaxed font-medium">Monitoring
+                            meeting stream for real-time strategic context...</p>
+                    </div>
+                </div>
+            </div>
+            <div id="topic-tags" class="flex flex-wrap gap-1.5 mt-3"></div>
+        </section>
+
+        <!-- Intelligence Stack -->
+        <div id="ai-insight-container" class="hidden space-y-5">
+
+            <!-- Critical Path (General Highlights) -->
+            <div id="critical-path-container" class="content-card">
+                <div class="card-inner-header">
+                    <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Strategic Evolution</span>
+                    <span class="text-[8px] font-black text-blue-500 mono">STABLE_FEED</span>
+                </div>
+                <ul id="vital-discussion" class="scroll-container overflow-hidden">
+                    <!-- Bullets append here -->
+                </ul>
+            </div>
+
+            <!-- Action Items (Persistent Tasks) -->
+            <div id="action-items-section" class="hidden">
+                <div class="section-header">Pending Commitments</div>
+                <div id="action-items-container">
+                    <!-- Action cards append here -->
+                </div>
+            </div>
+
+            <!-- Neural Grounding (Rolling Audit Feed) -->
+            <div id="neural-grounding-container" class="hidden">
+                <div class="section-header">Cross-Document Audit</div>
+                <div id="grounding-list" class="space-y-3">
+                    <!-- Grounding cards append here -->
+                </div>
+                <div id="grounding-content" class="hidden"></div> <!-- Legacy Hidden -->
+            </div>
+        </div>
+
+        <!-- Hidden Legacy Buffers -->
+        <div id="transcript-container" class="hidden">
+            <div id="transcript"></div>
+        </div>
+        <div id="vital-bullets-container" class="hidden"></div>
+        <div id="vital-redflags-container" class="hidden"></div>
+
+        <!-- Highlight Repository -->
+        <section id="important-center" class="hidden">
+            <div class="section-header">Pinned Intelligence</div>
+            <div class="content-card border-blue-500/30">
+                <ul id="important-list"></ul>
+            </div>
+        </section>
+
+        <!-- Document Sources -->
+        <section>
+            <div class="section-header">Source documentation</div>
+            <div id="context-cards" class="space-y-2 pb-20">
+                <div class="p-6 text-center border border-dashed border-zinc-800 rounded opacity-30">
+                    <p class="text-[9px] uppercase font-bold mono">No documentation hits</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Sprint 2: Contextual Flashback (Live Meeting Q&A) -->
+    <div id="flashback-container" class="px-4 pb-2">
+        <div class="relative group">
+            <input type="text" id="flashback-input" placeholder="Ask MeetingIQ (e.g. 'What was the timeline?')"
+                class="w-full bg-[#0a0a0b] border-2 border-zinc-800 rounded-lg px-4 py-2.5 text-[13px] text-white font-medium outline-none focus:border-blue-500 transition-all placeholder:text-zinc-600">
+            <div id="flashback-status" class="absolute right-3 top-2.5 hidden">
+                <div class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+        <div id="flashback-response"
+            class="hidden mt-2 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg text-[13px] text-white font-medium leading-relaxed slide-in">
+            <!-- Answer appears here -->
+        </div>
+    </div>
+
+    <!-- Professional Control Footer -->
+    <footer class="h-14 shrink-0 border-t border-border-subtle bg-bg-base px-4 flex items-center justify-between">
+        <div class="text-[10px] font-medium text-zinc-600 mono uppercase"><span id="doc-count">0</span> Assets Indexed
+        </div>
+        <div class="flex gap-2">
+            <button id="briefing-btn" class="btn-primary bg-emerald-600 text-white border-none">Summarize</button>
+            <button id="add-doc-btn" class="btn-primary">Ingest Asset</button>
+            <button id="settings-btn-top"
+                class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38 a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Asset Modal -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-6">
+        <div id="add-doc-modal" class="hidden content-card w-full max-w-sm">
+            <div class="card-inner-header">
+                <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Asset Ingestion</span>
+                <button class="close-modal text-lg leading-none">&times;</button>
+            </div>
+            <form id="add-doc-form" class="p-4 space-y-4">
+                <div id="drop-zone"
+                    class="border border-dashed border-zinc-800 rounded p-6 text-center hover:bg-white/[0.02] cursor-pointer transition-colors">
+                    <input type="file" id="file-upload" class="hidden" accept=".pdf,.docx,.txt">
+                    <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Click to link PDF/DOCX/TXT
+                    </p>
+                    <p id="file-name" class="text-[10px] text-blue-500 mt-2 font-medium hidden truncate"></p>
+                </div>
+                <input type="text" id="doc-title" placeholder="Descriptive Title" required
+                    class="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-xs outline-none focus:border-zinc-700 transition-colors">
+                <textarea id="doc-content" placeholder="Paste knowledge or scrape file..." required minlength="50"
+                    class="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-xs h-32 outline-none focus:border-zinc-700 resize-none transition-colors"></textarea>
+                <button type="submit" class="w-full btn-primary py-2.5">PROCESS & INDEX ASSET</button>
+            </form>
+        </div>
+        <!-- Sprint 3: Executive Briefing Modal -->
+        <div id="briefing-modal" class="hidden content-card w-full max-w-sm">
+            <div class="card-inner-header">
+                <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Executive Briefing</span>
+                <button class="close-modal text-lg leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div id="briefing-status" class="flex items-center justify-center py-10 hidden">
+                    <div class="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin">
+                    </div>
+                </div>
+                <div id="briefing-content"
+                    class="text-[12px] text-zinc-100 leading-relaxed font-medium max-h-96 overflow-y-auto scroll-container whitespace-pre-wrap">
+                    <!-- Executive summary appears here -->
+                </div>
+                <button id="copy-briefing-btn"
+                    class="w-full btn-primary py-2.5 bg-emerald-600 text-white border-none mt-4">COPY TO
+                    CLIPBOARD</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-banner"
+        class="hidden fixed bottom-16 left-4 right-4 p-3 rounded shadow-2xl z-[110] animate-in slide-in-from-bottom-2">
+        <div class="flex items-center gap-3">
+            <span class="text-sm">⚠️</span>
+            <p id="error-message" class="text-[10px] font-bold text-white uppercase tracking-tight flex-1"></p>
+            <button id="error-fix-btn" class="text-[9px] font-black text-white underline uppercase">Configure</button>
+        </div>
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+
+</html>

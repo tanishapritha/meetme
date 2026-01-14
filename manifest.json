@@ -1,0 +1,39 @@
+{
+    "manifest_version": 3,
+    "name": "Meeting Context AI",
+    "version": "1.0.0",
+    "description": "Live transcription with automatic context from your knowledge base",
+    "permissions": [
+        "tabCapture",
+        "storage",
+        "activeTab",
+        "sidePanel",
+        "tabs"
+    ],
+    "host_permissions": [
+        "https://api.anthropic.com/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "action": {
+        "default_title": "Meeting Context AI"
+    },
+    "commands": {
+        "start-recording": {
+            "suggested_key": {
+                "default": "Alt+Shift+S",
+                "mac": "Command+Shift+S"
+            },
+            "description": "Start/stop transcription"
+        }
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}
