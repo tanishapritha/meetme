@@ -1,24 +1,19 @@
-# MeetingIQ v3
+# MeetMe (Legacy Shell)
 
-Enterprise-grade meeting intelligence platform. Real-time transcription, document-grounded insights, and proactive context injection.
+This directory contains the Chrome Extension shell for the MeetMe platform. It handles the audio capture and provides the HUD (Heads-Up Display) overlay for live meetings.
 
-## Stack
-- **Framework:** Next.js 14 (App Router)
-- **Intelligence:** OpenRouter / Gemini
-- **Transcription:** Deepgram (Nova-2)
-- **Persistence:** Dexie.js (Local-first)
-- **UI:** Tailwind CSS + Framer Motion
+## Technical Details
+- **Manifest:** Manifest V3
+- **Audio Capture:** `chrome.tabCapture` API
+- **Communication:** `chrome.runtime.sendMessage` to the intelligence layer
+- **Styling:** Custom Obsidian-Dark Theme
 
 ## Development
-```bash
-npm install
-npm run dev
-```
-
-## Architecture
-- **Server Actions:** All heavy intelligence and API calls are handled server-side to protect keys and offload compute.
-- **RAG Engine:** Local-first vector search running in the browser for maximum privacy and low latency.
-- **Micro-Briefings:** Real-time entity extraction from ingested assets.
+To load this into Chrome:
+1. Open `chrome://extensions`
+2. Enable **Developer Mode**
+3. Click **Load Unpacked**
+4. Select this directory (`/chrome-extension`)
 
 ---
-*Built for MNC scale.*
+*Powered by MeetMe Intelligence*

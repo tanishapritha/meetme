@@ -19,6 +19,3 @@ npm run dev
 - **Server Actions:** All heavy intelligence and API calls are handled server-side to protect keys and offload compute.
 - **RAG Engine:** Local-first vector search running in the browser for maximum privacy and low latency.
 - **Micro-Briefings:** Real-time entity extraction from ingested assets.
-
----
-*Built for MNC scale.*
