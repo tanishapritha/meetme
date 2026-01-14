@@ -3,12 +3,16 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Activity, Zap, FileSearch, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { HeroCard } from "@/components/intel/HeroCard";
+import { useMeetingProcessor } from "@/hooks/useProcessor";
 
 export default function Home() {
     const [isRecording, setIsRecording] = useState(false);
+    const [transcript, setTranscript] = useState("");
+    const intelligence = useMeetingProcessor(transcript);
 
     return (
-        <div className="flex flex-col h-screen text-white">
+        <div className="flex flex-col h-screen text-white neural-grid">
             {/* Dynamic Header */}
             <header className="flex justify-between items-center p-4 border-b border-zinc-900 bg-black/80 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
@@ -18,8 +22,8 @@ export default function Home() {
                 <button
                     onClick={() => setIsRecording(!isRecording)}
                     className={`px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest transition-all ${isRecording
-                            ? 'bg-red-500/10 text-red-500 border border-red-500/20'
-                            : 'bg-white text-black hover:scale-105 active:scale-95'
+                        ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                        : 'bg-white text-black hover:scale-105 active:scale-95'
                         }`}
                 >
                     {isRecording ? 'STOP SESSION' : 'START INTELLIGENCE'}

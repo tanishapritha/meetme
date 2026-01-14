@@ -13,6 +13,13 @@ body {
     font-feature-settings: "ss01", "ss03", "cv08", "cv11";
 }
 
+.neural-grid {
+    background-size: 40px 40px;
+    background-image:
+        linear-gradient(to right, #18181b 1px, transparent 1px),
+        linear-gradient(to bottom, #18181b 1px, transparent 1px);
+}
+
 .intel-row {
     @apply flex gap-3 p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:bg-zinc-900 transition-colors;
 }
