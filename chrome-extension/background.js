@@ -5,23 +5,21 @@ chrome.runtime.onInstalled.addListener(async () => {
     if (!settings.deepgramApiKey) {
         await chrome.storage.local.set({ deepgramApiKey: DEFAULT_DG_API_KEY });
     }
-
-    // Set side panel to open on icon click
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
         .catch((error) => console.error('Error setting panel behavior:', error));
 });
 
 let isRecording = false;
 
-// Handle keyboard shortcut
 chrome.commands.onCommand.addListener((command) => {
+    console.log('Command received:', command);
     if (command === 'start-recording') {
         handleTrigger();
     }
 });
 
-// Handle explicit message from side panel button
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('Message received in background:', message.type);
     if (message.type === 'RECORDING_STOPPED') {
         isRecording = false;
     } else if (message.type === 'TOGGLE_RECORDING') {
@@ -30,46 +28,68 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function handleTrigger() {
+    console.log('handleTrigger called. current isRecording:', isRecording);
     try {
-        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        if (!tab || !tab.id || (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')))) {
-            console.warn('Cannot record this tab.');
+        // Query all active tabs across all windows
+        const tabs = await chrome.tabs.query({ active: true });
+        console.log('Active tabs found:', tabs.length);
+
+        // Find the first tab that isn't a chrome:// or edge:// system page
+        let recordableTab = tabs.find(t => t.url && !t.url.startsWith('chrome://') && !t.url.startsWith('edge://') && !t.url.startsWith('about:'));
+
+        if (!recordableTab) {
+            console.warn('No recordable active tab found in any window. Trying all tabs...');
+            const allTabs = await chrome.tabs.query({});
+            recordableTab = allTabs.find(t => t.url && !t.url.startsWith('chrome://') && !t.url.startsWith('edge://') && !t.url.startsWith('about:'));
+        }
+
+        if (!recordableTab) {
+            console.warn('Still no recordable tab found.');
+            if (isRecording) {
+                console.log('Allowing stop recording even without tab.');
+                stopRecording();
+            }
             return;
         }
 
-        if (isRecording) {
-            stopRecording();
-        } else {
-            startRecording(tab.id);
-        }
+        console.log('Selected tab for recording:', recordableTab.id, recordableTab.url);
+        triggerWithTab(recordableTab);
     } catch (err) {
         console.error('Trigger handling error:', err);
     }
 }
 
+function triggerWithTab(tab) {
+    if (!tab.id || (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')))) {
+        console.warn('Cannot record system tabs:', tab.url);
+        return;
+    }
+
+    if (isRecording) {
+        console.log('Stopping recording...');
+        stopRecording();
+    } else {
+        console.log('Starting recording for tab:', tab.id);
+        startRecording(tab.id);
+    }
+}
+
 function startRecording(tabId) {
-    // Ensure side panel is configured
     chrome.sidePanel.setOptions({
         tabId,
         path: 'sidepanel.html',
         enabled: true
     });
 
-    // Open side panel if possible
     if (chrome.sidePanel.open) {
         chrome.sidePanel.open({ tabId }).catch(() => { });
     }
 
-    // CRITICAL: getMediaStreamId MUST be called synchronously in the gesture task
     chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, (streamId) => {
         if (chrome.runtime.lastError) {
             const errMsg = chrome.runtime.lastError.message;
             console.error('tabCapture error:', errMsg);
-
-            chrome.runtime.sendMessage({
-                type: 'ERROR',
-                message: `Capture failed: ${errMsg}.`
-            });
+            chrome.runtime.sendMessage({ type: 'ERROR', message: `Capture failed: ${errMsg}` });
             return;
         }
 
@@ -80,14 +100,15 @@ function startRecording(tabId) {
 
         isRecording = true;
 
-        // Wait a moment for side panel to be ready for the message
+        // Brief delay to ensure sidepanel is listening
         setTimeout(() => {
             chrome.runtime.sendMessage({
                 type: 'STREAM_READY',
                 streamId: streamId,
                 tabId: tabId
             });
-        }, 1000);
+            console.log('STREAM_READY sent to sidepanel');
+        }, 800);
     });
 }
 

@@ -596,7 +596,7 @@ async function handleAddDoc(e) {
         hideModal();
         await updateDocCount();
         await refreshFuse();
-        addDocForm.reset();
+        document.getElementById('add-doc-form').reset();
         fileNameDisplay.classList.add('hidden');
     } catch (err) {
         showError(`INGESTION_FAILED: ${err.message}`);
