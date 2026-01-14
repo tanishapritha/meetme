@@ -37,16 +37,23 @@ export default function Home() {
                 <section className="space-y-4">
                     <div className="flex justify-between items-end">
                         <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Strategic Pulse</h2>
-                        <div className="flex gap-1">
-                            {[1, 2, 3].map(i => <div key={i} className="w-1 h-3 bg-zinc-800 rounded-full" />)}
+                        <div className={`text-[10px] font-bold uppercase tracking-tight ${intelligence?.sentiment === 'TENSE' ? 'text-red-500' : 'text-emerald-500'
+                            }`}>
+                            {intelligence?.sentiment || 'Monitoring...'}
                         </div>
                     </div>
-                    <div className="p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl relative overflow-hidden group">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-                        <p className="text-[14px] leading-relaxed text-zinc-300 font-medium">
-                            Monitoring meeting dynamics. Grounding against <span className="text-blue-400">Enterprise Context</span>...
+                    <motion.div
+                        animate={{
+                            borderColor: intelligence?.sentiment === 'TENSE' ? '#ef4444' : '#27272a'
+                        }}
+                        className="p-4 bg-zinc-900/30 border border-zinc-800 rounded-xl relative overflow-hidden group"
+                    >
+                        <div className={`absolute top-0 left-0 w-1 h-full ${intelligence?.sentiment === 'TENSE' ? 'bg-red-500' : 'bg-blue-500'
+                            }`} />
+                        <p className="text-[14px] leading-relaxed text-zinc-300 font-medium whitespace-pre-wrap">
+                            {intelligence?.pulse || "Establishing ground truth via Neural Grounding..."}
                         </p>
-                    </div>
+                    </motion.div>
                 </section>
 
                 {/* Hero Card Stack (Micro-Briefings) */}
@@ -57,26 +64,17 @@ export default function Home() {
                     </div>
 
                     <AnimatePresence>
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-xl space-y-3"
-                        >
-                            <div className="flex justify-between">
-                                <span className="text-[11px] font-black text-purple-400 uppercase italic">Project Phoenix</span>
-                                <span className="text-[9px] text-zinc-600 mono">Match 98%</span>
-                            </div>
-                            <ul className="space-y-2">
-                                <li className="flex items-start gap-3">
-                                    <div className="w-1 h-1 rounded-full bg-purple-500 mt-1.5" />
-                                    <span className="text-[12px] text-zinc-300">Cloud migration mandate (Q4 Deadline)</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <div className="w-1 h-1 rounded-full bg-purple-500 mt-1.5" />
-                                    <span className="text-[12px] text-zinc-300">Critical Stakeholder: Director Sarah</span>
-                                </li>
-                            </ul>
-                        </motion.div>
+                        {intelligence?.pulse && (
+                            <HeroCard
+                                entity="Project Phoenix"
+                                bullets={[
+                                    "Mandated Cloud Migration (Q4 deadline)",
+                                    "Budget Cap: $2.4M USD",
+                                    "Director Approval Pending (Sarah L.)"
+                                ]}
+                                relevance={98}
+                            />
+                        )}
                     </AnimatePresence>
                 </section>
 
@@ -87,10 +85,19 @@ export default function Home() {
                         <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Action Pulse</h2>
                     </div>
                     <div className="space-y-3">
-                        <div className="intel-row">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5" />
-                            <p className="text-[13px] text-zinc-100 font-semibold italic">Commitment: Sync with GTM by EOW.</p>
-                        </div>
+                        {intelligence?.actionItems.map((item: string, id: number) => (
+                            <motion.div
+                                key={id}
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                className="intel-row group"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 group-hover:scale-125 transition-transform" />
+                                <p className="text-[13px] text-zinc-100 font-semibold italic">{item}</p>
+                            </motion.div>
+                        )) || (
+                                <span className="text-[12px] text-zinc-600 italic">Listening for commitments...</span>
+                            )}
                     </div>
                 </section>
 
